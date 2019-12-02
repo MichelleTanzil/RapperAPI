@@ -1,10 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Linq;
+using System;
+
 
 namespace RapperAPI.Controllers {
     public class GroupController : Controller {
         List<Group> allGroups {get; set;}
+        List<Artist> allArtists = JsonToFile<Artist>.ReadJson();
         public GroupController() {
             allGroups = JsonToFile<Group>.ReadJson();
         }
@@ -24,10 +27,24 @@ namespace RapperAPI.Controllers {
 
         [HttpGet]
         [Route("groups/groupid/{id}")]
-        public IActionResult GroupID(int id)
+        [Route("groups/groupid/{id}/{displayArtists}")]
+        public IActionResult GroupID(int id, bool displayArtists)
         {
-            var groupID = allGroups.Where(a => a.Id == id);
-            return Json(groupID);
+            var groups = allGroups.Where(a => a.Id == id);
+            if (displayArtists == true)
+            {
+                groups = groups.Join(allArtists,
+                    g => g.Id,
+                    a => a.GroupId,
+                    (g, a) => {
+                        Console.WriteLine(g);
+                        Console.WriteLine(a);
+                        g.Members.Add(a); 
+                        return g;
+                        }
+                );
+            }
+            return Json(groups);
         }
     }
 }
